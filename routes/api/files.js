@@ -84,9 +84,17 @@ router.delete(
   (req, res) => {
     File.findById({ _id: req.params.file_id })
       .then((file) => {
+        // Check if the logged in user is the owner of file
+        if (file.user.toString() !== req.user.id) {
+          return res
+            .status(401)
+            .json({ error: "You are not authorized to delete this file" });
+        }
+
         // Instantiate S3 Object
         let s3 = new S3Util();
 
+        // Deleting file from S3 Bucket
         s3.delete(file.url, req.user._id)
           .then((data) => {
             // Delete file from database
